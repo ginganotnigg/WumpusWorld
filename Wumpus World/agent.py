@@ -21,3 +21,6 @@ class Agent:
         self.guiding_path = []
         # If the agent's previous action is shooting, this is the target of that shot.
         self.prev_shoot_pos = ()
+        
+    def update_position(self, next_position):
+        self.pos = next_position

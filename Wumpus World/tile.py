@@ -40,8 +40,8 @@ class Tile:
     def setStrench(self):
         self.__numStrench += 1
 
-    def setGold(self):
-        self.__isGold = True
+    def setGold(self, bool_):
+        self.__isGold = bool_
 
     def setPlayer(self):
         self.__isPlayer = True

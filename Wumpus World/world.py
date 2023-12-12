@@ -43,7 +43,7 @@ class WumpusWorld:
                 for i in range(self.height):
                     for j in range(self.width):
                         if 'G' in tiles[i][j]:
-                            (self.map[i][j]).setGold()
+                            (self.map[i][j]).setGold(True)
                             self.numGold += 1
                         if 'P' in tiles[i][j]:
                             (self.map[i][j]).setPit()

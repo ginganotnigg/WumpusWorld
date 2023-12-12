@@ -1,5 +1,6 @@
 from world import *
 from agent import *
+# from logic import get_agent_path
 import pygame
 import enum
 
@@ -142,10 +143,13 @@ class Board:
             nextPos = (self.agent.pos[0] + 1, self.agent.pos[1])
 
         if self.validPos(nextPos):
-            self.world.movePlayer(self.agent.pos[0], self.agent.pos[1], nextPos[0], nextPos[1])
+            # Kiểm tra xem ô tiếp theo có Gold không
+            nextTile = self.world.map[nextPos[0]][nextPos[1]]
+            if nextTile.getGold():
+                self.world.grabGold(nextPos[0], nextPos[1])  # Xóa Gold từ bản đồ
+                self.score += 100  # Cộng điểm cho việc nhặt Gold
 
-            #if self.terrains[self.agent.pos[0]][self.agent.pos[1]]:
-                #self.terrains[self.agent.pos[0]][self.agent.pos[1]] = None
+            self.world.movePlayer(self.agent.pos[0], self.agent.pos[1], nextPos[0], nextPos[1])
 
             self.agent.state = action
 
@@ -237,7 +241,11 @@ class Board:
         self.screen.blit(reasonText, reasonText.get_rect(center=(WIDTH * pt // 2, HEIGHT * pt // 2 + 20)))
 
     ############################# INPUT AND UPDATE GAME #############################
-
+    def removeGold(self, position):
+        if self.validPos(position):
+            self.world.map[position[0]][position[1]].setGold(False)
+            self.objects[position[0]][position[1]] = None
+            
     def updateBoard(self, event):
         if event.key == pygame.K_w:
             action = Action.UP
@@ -275,25 +283,46 @@ class Board:
                 self.score += 10
                 self.endGame("Climb")
             
+def update_agent_position_from_path(agent, board, path, current_step):
+    # if path:
+    #     next_position = path.pop(0)
+        next_position = path[current_step]
+        agent.update_position(next_position)
+
+        # Nếu Agent tới vị trí có Gold, thì xóa Gold
+        if board.world.map[next_position[0]][next_position[1]].getGold():
+            print("HEHE")
+            board.removeGold(next_position)
 
 
+agent_path = [(9, 0), (9, 1), (9, 2), (9, 3), (9, 4), (9, 5), (9, 6), (9, 7), (9, 8), (9, 7), (8, 7), (9, 7), (9, 6), (9, 5), (8, 5), (8, 4), (8, 3), (8, 2), (8, 1), (8, 0), (7, 0), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 5), (6, 5), (7, 5), (7, 4), (7, 3), (6, 3), (6, 2), (6, 1), (6, 0), (5, 0), (6, 0), (6, 1), (6, 2), (5, 2), (5, 3), (5, 4), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8), (4, 9), (5, 9), (6, 9), (7, 9), (8, 9), (7, 9), (7, 8), (7, 9), (6, 9), (5, 9), (5, 8), (5, 7), (6, 7), (5, 7), (5, 6), (4, 6), (4, 7), (4, 8), (4, 9), (3, 9), (3, 8), (3, 7), (3, 6), (3, 5), (3, 4), (3, 5), (2, 5), (3, 5), (3, 6), (3, 7), (2, 7), (2, 8), (2, 9), (1, 9), (1, 8), (1, 7), (1, 6), (0, 6), (0, 7), (0, 8), (0, 9), (0, 8), (0, 7), (0, 6), (0, 5), (0, 6), (1, 6), (2, 6), (2, 5), (3, 5), (3, 4), (4, 4), (4, 3), (4, 2), (4, 1), (4, 2), (3, 2), (4, 2), (5, 2), (6, 2), (6, 1), (6, 0), (7, 0), (8, 0), (9, 0)]
+current_step = 0
 
 # EXECUTE
 wumpus = WumpusWorld()
 wumpus.readMap('map/map1.txt')
 board = Board(wumpus)
+stack = []
 
-while run:
+while run and current_step < len(agent_path):
     board.screen.fill('black')
     board.drawWorld()
+
+    # Update agent position
+    # board.agent.update_position(agent_path[current_step])
+    update_agent_position_from_path(board.agent, board, agent_path, current_step)
+
+    # Draw agent and other elements
     board.drawAgent()
     board.drawScore()
-    
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
         if not stop and event.type == pygame.KEYUP:
             board.updateBoard(event)
+
     pygame.display.flip()
-    pygame.time.delay(30)
+    pygame.time.delay(100)  # Adjust the delay time as needed
+    current_step += 1
 pygame.quit()
