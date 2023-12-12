@@ -1,7 +1,7 @@
 from world import *
 from agent import *
+from menu import *
 import pygame
-import enum
 
 
 # INIT
@@ -13,7 +13,7 @@ pygame.init()
 pt = 70
 WIDTH = 10
 HEIGHT = 10
-map_font = pygame.font.Font('freesansbold.ttf', 14)
+map_font = pygame.font.Font('freesansbold.ttf', 18)
 alert_font = pygame.font.Font('freesansbold.ttf', 30)
 run = True
 stop = False
@@ -22,11 +22,12 @@ stop = False
 
 # BOARD
 class Board:
-    
-
     def __init__(self, world):
         self.screen = pygame.display.set_mode([WIDTH * pt, HEIGHT * pt + 50])
         pygame.display.set_caption('WUMPUS WORLD')
+        fog = pygame.image.load(f'assets/dust.png')
+        fog = fog.convert()
+        fog.set_alpha(150)
 
         # Map variables
         self.world = world
@@ -36,18 +37,19 @@ class Board:
         self.terrains = []
 
         # Agent
-        self.agent = Agent(self.world.doorPos)
+        self.agent = Agent(self.world)
 
         # Score
         self.score = 0
+        self.move = 0
 
         # Load images
         self.DOOR = pygame.transform.scale(pygame.image.load(f'assets/door.png'), (pt, pt))
         self.TILE = pygame.transform.scale(pygame.image.load(f'assets/floor.png'), (pt, pt))
-        self.WUMPUS = pygame.transform.scale(pygame.image.load(f'assets/wumpus.png'), (pt, pt))
+        self.WUMPUS = pygame.transform.scale(pygame.image.load(f'assets/monster.png'), (pt, pt))
         self.GOLD = pygame.transform.scale(pygame.image.load(f'assets/gold.png'), (pt, pt))
         self.PIT = pygame.transform.scale(pygame.image.load(f'assets/pit.png'), (pt, pt))
-        self.TERRAIN = pygame.transform.scale(pygame.image.load(f'assets/terrain.png'), (pt, pt))
+        self.TERRAIN = pygame.transform.scale(fog, (pt, pt))
         self.AGENT_DOWN = pygame.transform.scale(pygame.image.load(f'assets/agent_down.png'), (pt, pt))
         self.AGENT_UP = pygame.transform.scale(pygame.image.load(f'assets/agent_up.png'), (pt, pt))
         self.AGENT_LEFT = pygame.transform.scale(pygame.image.load(f'assets/agent_left.png'), (pt, pt))
@@ -57,6 +59,20 @@ class Board:
         self.ARROW_LEFT = pygame.transform.scale(pygame.image.load(f'assets/arrow_left.png'), (pt, pt))
         self.ARROW_RIGHT = pygame.transform.scale(pygame.image.load(f'assets/arrow_right.png'), (pt, pt))
 
+        # Init blocking view
+        for i in range(HEIGHT):
+            bRow = []
+            for j in range(WIDTH):
+                currTile = self.world.map[i][j]
+                if currTile.getPlayer():
+                    self.agent.pos = (i, j)
+                    self.agent.asset = self.screen.blit(self.AGENT_RIGHT, (j * pt, i * pt))
+                    bRow.append(None)
+                else:
+                    bRow.append(self.screen.blit(self.TERRAIN, (j * pt, i * pt)))
+            self.terrains.append(bRow)
+    
+    
     ############################# GRAPHICS #############################
 
     def drawWorld(self):
@@ -90,29 +106,25 @@ class Board:
             for j in range(WIDTH):
                 currTile = self.world.map[i][j]
                 if currTile.getBreeze():
-                    wRow.append(self.screen.blit(map_font.render('Breeze', True, 'white'), (12 + j * pt, 20 + i * pt)))
+                    wRow.append(self.screen.blit(map_font.render('B', True, 'aqua'), (1 + j * pt, 2 + i * pt)))
                 if currTile.getStrench():
-                    wRow.append(self.screen.blit(map_font.render('Strench', True, 'white'), (8 + j * pt, 36 + i * pt)))
+                    wRow.append(self.screen.blit(map_font.render('S', True, 'lime'), (57 + j * pt, 2 + i * pt)))
                 if not currTile.getBreeze() and not currTile.getStrench():
                     wRow.append(None)
             self.warnings.append(wRow)
 
         # Set blocking view
         for i in range(HEIGHT):
-            bRow = []
             for j in range(WIDTH):
                 currTile = self.world.map[i][j]
                 if currTile.getPlayer():
-                    self.agent.pos = (i, j)
                     self.agent.asset = self.screen.blit(self.AGENT_RIGHT, (j * pt, i * pt))
-                    bRow.append(self.agent.asset)
-                else:
-                    pass
-                    #bRow.append(self.screen.blit(self.TERRAIN, (j * pt, i * pt)))
-            self.terrains.append(bRow)
+                elif self.terrains[i][j]:
+                    self.screen.blit(self.TERRAIN, (j * pt, i * pt))
         
-    def drawScore(self):
-        self.screen.blit(alert_font.render(f'Score: {self.score}', True, 'white'), (WIDTH * pt / 2 - 80, HEIGHT * pt + 10))
+    def drawText(self):
+        self.screen.blit(alert_font.render(f'Score: {self.score}', True, 'white'), (WIDTH * pt - 220, HEIGHT * pt + 10))
+        self.screen.blit(alert_font.render(f'Move: {self.move}', True, 'white'), (40, HEIGHT * pt + 10))
 
     def drawAgent(self):
         if self.agent.action == Action.UP:
@@ -143,13 +155,15 @@ class Board:
 
         if self.validPos(nextPos):
             self.world.movePlayer(self.agent.pos[0], self.agent.pos[1], nextPos[0], nextPos[1])
+            self.agent.pos = nextPos
 
-            #if self.terrains[self.agent.pos[0]][self.agent.pos[1]]:
-                #self.terrains[self.agent.pos[0]][self.agent.pos[1]] = None
+            if self.terrains[self.agent.pos[0]][self.agent.pos[1]]:
+                self.terrains[self.agent.pos[0]][self.agent.pos[1]] = None
 
             self.agent.state = action
 
             self.score -= 10
+            self.move += 1
 
             currTile = self.world.map[self.agent.pos[0]][self.agent.pos[1]]
             if currTile.getPit():
@@ -186,21 +200,21 @@ class Board:
             self.world.killWumpus(arrow_loc[0], arrow_loc[1])
 
             # UPDATE BOARD
-            #if self.terrains[arrow_loc[0]][arrow_loc[1]]:
-                #self.terrains[arrow_loc[0]][arrow_loc[1]] = None
+            if self.terrains[arrow_loc[0]][arrow_loc[1]]:
+                self.terrains[arrow_loc[0]][arrow_loc[1]] = None
 
             self.objects[arrow_loc[0]][arrow_loc[1]] = None
 
             adj = self.world.getAdjacents(arrow_loc[0], arrow_loc[1])
             for a in adj:
-                self.warnings[a[0]][a[1]][1] = None
+                self.warnings[a[0]][a[1]] = None
 
             # END GAME ?
             if not self.world.leftWumpus() and not self.world.leftGold():
                 self.endGame("Clear")
 
 
-    def grabGold(self, action):
+    def grabGold(self):
         if self.world.map[self.agent.pos[0]][self.agent.pos[1]].getGold():
             self.score += 100
 
@@ -217,8 +231,13 @@ class Board:
 
     def endGame(self, reason):
         global stop
-        stop = True
-        pygame.draw.rect(self.screen, 'black', pygame.Rect(0, 0, WIDTH * pt, HEIGHT * pt + 50))
+
+        # Last update
+        self.screen.fill('black')
+        self.drawWorld()
+        if reason == 'Pit' or reason == 'Wumpus':
+            self.drawAgent()
+        self.drawText()
 
         alertText = alert_font.render('GAME ENDED', True, 'white')
         self.screen.blit(alertText, alertText.get_rect(center=(WIDTH * pt // 2, HEIGHT * pt // 2 - 20)))
@@ -229,12 +248,14 @@ class Board:
         elif reason == 'Wumpus':
             reasonStr = 'You were killed by a Wumpus'
         elif reason == 'Climb':
-            reasonStr = 'You climb out of the Cave'
+            reasonStr = 'You climbed out of the Cave'
         elif reason == 'Clear':
             reasonStr = 'You cleared the Map'
 
         reasonText = alert_font.render(reasonStr, True, 'white')
         self.screen.blit(reasonText, reasonText.get_rect(center=(WIDTH * pt // 2, HEIGHT * pt // 2 + 20)))
+        pygame.time.wait(1000)
+        stop = True
 
     ############################# INPUT AND UPDATE GAME #############################
 
@@ -283,11 +304,14 @@ wumpus = WumpusWorld()
 wumpus.readMap('map/map1.txt')
 board = Board(wumpus)
 
+
+# Game screen
 while run:
-    board.screen.fill('black')
-    board.drawWorld()
-    board.drawAgent()
-    board.drawScore()
+    if not stop:
+        board.screen.fill('black')
+        board.drawWorld()
+        board.drawAgent()
+        board.drawText()
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -295,5 +319,5 @@ while run:
         if not stop and event.type == pygame.KEYUP:
             board.updateBoard(event)
     pygame.display.flip()
-    pygame.time.delay(30)
+    pygame.time.delay(100)
 pygame.quit()

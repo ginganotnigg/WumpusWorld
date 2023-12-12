@@ -53,6 +53,7 @@ class WumpusWorld:
                         if 'W' in tiles[i][j]:
                             (self.map[i][j]).setWumpus()    
                             adj = self.getAdjacents(i, j)
+                            self.numWumpus += 1
                             for a in adj:
                                 (self.map[a[0]][a[1]]).setStrench()
                         if 'A' in tiles[i][j]:

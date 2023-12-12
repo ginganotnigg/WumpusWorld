@@ -1,4 +1,5 @@
 import enum
+from world import *
 
 class Action(enum.Enum):
     UP = 1
@@ -10,10 +11,10 @@ class Action(enum.Enum):
     CLIMB = 7
 
 class Agent:
-    def __init__(self, start_pos):
+    def __init__(self, world):
+        self.world = world
         self.asset = None
-        self.START = start_pos
-        self.pos = self.START
+        self.pos = self.world.doorPos
         self.visited = []
         self.action = Action.RIGHT
 
