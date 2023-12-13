@@ -1,24 +1,17 @@
 from world import *
 from agent import *
-from menu import *
 import pygame
+from btn_text import *
+
+# from menuBar import Button, draw_text, run
 
 
-# INIT
-pygame.init()
 
-
-
-# CONSTANTS
 pt = 70
 WIDTH = 10
 HEIGHT = 10
-map_font = pygame.font.Font('freesansbold.ttf', 18)
-alert_font = pygame.font.Font('freesansbold.ttf', 30)
-run = True
-stop = False
 
-
+buttons = []
 
 # BOARD
 class Board:
@@ -254,6 +247,11 @@ class Board:
 
         reasonText = alert_font.render(reasonStr, True, 'white')
         self.screen.blit(reasonText, reasonText.get_rect(center=(WIDTH * pt // 2, HEIGHT * pt // 2 + 20)))
+        
+        button_quit = Button("QUIT", 260, 300, True, alert_font, self.screen)
+
+        buttons.append(button_quit)
+        
         pygame.time.wait(1000)
         stop = True
 
@@ -304,20 +302,53 @@ wumpus = WumpusWorld()
 wumpus.readMap('map/map1.txt')
 board = Board(wumpus)
 
+def main_quit():
+    pygame.quit()
 
 # Game screen
-while run:
-    if not stop:
-        board.screen.fill('black')
-        board.drawWorld()
-        board.drawAgent()
-        board.drawText()
+def main_run():
+    # INIT
+    pygame.init()
+
+
+    # global WIDTH, HEIGHT, pt
+    global map_font
+    global alert_font
+    # CONSTANTS
+
     
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if not stop and event.type == pygame.KEYUP:
-            board.updateBoard(event)
-    pygame.display.flip()
-    pygame.time.delay(100)
-pygame.quit()
+    
+    map_font = pygame.font.Font('freesansbold.ttf', 18)
+    alert_font = pygame.font.Font('freesansbold.ttf', 30)
+    # run = True
+    stop = False
+    run = True
+    while run:
+        if not stop:
+            board.screen.fill('black')
+            board.drawWorld()
+            board.drawAgent()
+            board.drawText()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if not stop and event.type == pygame.KEYUP:
+                board.updateBoard(event)
+            for button in buttons:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button.is_clicked(event):
+                    if button.text == "QUIT":
+                            print("Button QUIT is clicked.")
+                            # trả về menuBar
+
+                            running = False
+                            break
+
+
+                        
+
+        pygame.display.flip()
+        pygame.time.delay(100)
+    pygame.quit()
+
+
