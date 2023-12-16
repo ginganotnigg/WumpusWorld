@@ -243,8 +243,16 @@ class Board:
     ############################# INPUT AND UPDATE GAME #############################
     def removeGold(self, position):
         if self.validPos(position):
-            self.world.map[position[0]][position[1]].setGold(False)
-            self.objects[position[0]][position[1]] = None
+            self.world.map[position[0]][position[1]].removeGold()
+            # self.objects[position[0]][position[1]] = None
+    def removeWumpus(self, position):
+        if self.validPos(position):
+            self.world.map[position[0]][position[1]].removeWumpus()
+            # self.objects[position[0]][position[1]] = None
+    def removePlayer(self, position):
+        if self.validPos(position):
+            self.world.map[position[0]][position[1]].removePlayer()
+            # self.objects[position[0]][position[1]] = None
             
     def updateBoard(self, event):
         if event.key == pygame.K_w:
@@ -291,9 +299,10 @@ def update_agent_position_from_path(agent, board, path, current_step):
 
         # Nếu Agent tới vị trí có Gold, thì xóa Gold
         if board.world.map[next_position[0]][next_position[1]].getGold():
-            print("HEHE")
             board.removeGold(next_position)
-
+        # Nếu Agent tới vị trí có Wumpus, thì xóa Wumpus
+        if board.world.map[next_position[0]][next_position[1]].getWumpus():
+            board.removeWumpus(next_position)
 
 agent_path = [(9, 0), (9, 1), (9, 2), (9, 3), (9, 4), (9, 5), (9, 6), (9, 7), (9, 8), (9, 7), (8, 7), (9, 7), (9, 6), (9, 5), (8, 5), (8, 4), (8, 3), (8, 2), (8, 1), (8, 0), (7, 0), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 5), (6, 5), (7, 5), (7, 4), (7, 3), (6, 3), (6, 2), (6, 1), (6, 0), (5, 0), (6, 0), (6, 1), (6, 2), (5, 2), (5, 3), (5, 4), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8), (4, 9), (5, 9), (6, 9), (7, 9), (8, 9), (7, 9), (7, 8), (7, 9), (6, 9), (5, 9), (5, 8), (5, 7), (6, 7), (5, 7), (5, 6), (4, 6), (4, 7), (4, 8), (4, 9), (3, 9), (3, 8), (3, 7), (3, 6), (3, 5), (3, 4), (3, 5), (2, 5), (3, 5), (3, 6), (3, 7), (2, 7), (2, 8), (2, 9), (1, 9), (1, 8), (1, 7), (1, 6), (0, 6), (0, 7), (0, 8), (0, 9), (0, 8), (0, 7), (0, 6), (0, 5), (0, 6), (1, 6), (2, 6), (2, 5), (3, 5), (3, 4), (4, 4), (4, 3), (4, 2), (4, 1), (4, 2), (3, 2), (4, 2), (5, 2), (6, 2), (6, 1), (6, 0), (7, 0), (8, 0), (9, 0)]
 current_step = 0
@@ -303,6 +312,8 @@ wumpus = WumpusWorld()
 wumpus.readMap('map/map1.txt')
 board = Board(wumpus)
 stack = []
+
+board.removePlayer(list(agent_path[0]))
 
 while run and current_step < len(agent_path):
     board.screen.fill('black')
