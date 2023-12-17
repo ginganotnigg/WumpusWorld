@@ -27,7 +27,7 @@ action = {
 class Agent:
     def __init__(self, world_class):
         #
-        self.world = world_class.map
+        self.world = world_class.matrix
         self.start = world_class.doorPos
         ##
         self.B = np.full_like(self.world, 0, dtype=int)

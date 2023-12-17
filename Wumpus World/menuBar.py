@@ -101,17 +101,17 @@ def menu_run():
                         if box["action"]=='up' and box["text"]=="Map":
                             print(f"Đã click vào up Map")
                             if selected_level == len_level - 1:
-                                break;
+                                break
                             else: 
-                                selected_level +=1;
-                            break;
+                                selected_level +=1 
+                            break 
                         elif box["action"]=='down' and box["text"]=="Map":
                             print(f"Đã click vào down Map")
                             if selected_level == 0:
-                                break;
+                                break 
                             else: 
-                                selected_level -= 1;
-                                break;
+                                selected_level -= 1 
+                                break 
                 for button in buttons:
                     if button.is_clicked(event):
 
@@ -119,11 +119,11 @@ def menu_run():
                             print("Button QUIT is clicked.")
                             # thoát game
                             running = False
-                            break;
+                            break 
                         
                         if button.text == "START":
                             start_game()
-                            break;
+                            break 
         
         screen.fill((52, 78, 91))
         draw_menu()

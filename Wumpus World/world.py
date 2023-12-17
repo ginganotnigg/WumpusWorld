@@ -1,4 +1,5 @@
 from tile import *
+import numpy as np
 
 class WumpusWorld:
     def __init__(self):
@@ -8,6 +9,7 @@ class WumpusWorld:
         self.numGold = 0
         self.numWumpus = 0
         self.map = []
+        self.matrix = []
         self.doorPos = None
 
     def getAdjacents(self, i, j):
@@ -59,8 +61,16 @@ class WumpusWorld:
                         if 'A' in tiles[i][j]:
                             (self.map[i][j]).setPlayer()
                             self.doorPos = (i, j)
+                #
         except IOError:
             return None
+        with open(filename, 'r') as f:
+            temp = []
+            lines = f.read().splitlines()
+            for line in lines:
+                temp.append(line.split('.'))
+        temp = np.array(temp)
+        self.matrix = temp
 
     def generateMap(self, numPit, numWumpus, numGold):
         pass
