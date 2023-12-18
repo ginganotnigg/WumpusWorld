@@ -384,7 +384,7 @@ def update_agent_position_from_path(agent, board, path, current_step, lastGold):
 
 # EXECUTE
 wumpus = WumpusWorld()
-wumpus.readMap('map/map2.txt')
+wumpus.readMap('map/map3.txt')
 board = Board(wumpus)
 stack = []
 
