@@ -55,8 +55,6 @@ class Agent:
     def update_position(self, next_position):
         self.pos = next_position
         
-
-        
     def adj(self, x): #adjacent cells of x
         arr = []
         i = x[0]
@@ -71,18 +69,7 @@ class Agent:
             arr.append((i, j + 1))
         return arr
 
-
     def update_map(self, x): #update the map with the newly-known x
-        # for cell in self.adj(x):
-        #     if at(self.B,cell) == 1:
-        #         #self.P[cell] = 1
-        #         if cell in self.safe and cell not in self.visited:
-        #             self.safe.remove(cell)
-        #     if at(self.S,cell) == 1:
-        #         #self.W[cell] = 1
-        #         if cell in self.safe and cell not in self.visited:
-        #             self.safe.remove(cell)
-        #update the whole world
         for i in range(len(self.world) - 1):
             for j in range(len(self.world) - 1):
                 if at(self.B,(i, j)) == 1 and at(self.S,(i, j)) == 0 and at(self.B,(i+1, j+1)) == 0 and at(self.S,(i+1, j+1)) == 1:
@@ -111,7 +98,8 @@ class Agent:
                     for cell in self.adj((i,j)):
                         if at(self.W,cell) == 1 or cell in self.visited or cell in self.safe:
                             not_pit.append(cell)
-                    if len(not_pit) == 3: #make sure that 3 adjacent cell is safe, the remaining cell is the pit
+                    temp = len(self.adj((i,j))) - 1
+                    if len(not_pit) == temp: #make sure that all-except-one adjacent cell is safe, the remaining cell is the pit
                         for cell in self.adj((i,j)): 
                             if cell not in not_pit:
                                 set(self.P,cell,1)
@@ -123,7 +111,8 @@ class Agent:
                     for cell in self.adj((i,j)):
                         if at(self.P,cell) == 1 or cell in self.visited or cell in self.safe:
                             not_wumpus.append(cell)
-                    if len(not_wumpus) == 3: #make sure that 3 adjacent cell is safe, the remaining cell is the wumpus
+                    temp = len(self.adj((i,j))) - 1
+                    if len(not_wumpus) == temp: #make sure that all-except-one adjacent cell is safe, the remaining cell is the wumpus
                         for cell in self.adj((i,j)): 
                             if cell not in not_wumpus:
                                 set(self.W,cell,1)
@@ -132,7 +121,8 @@ class Agent:
                                     #make the bfs path from here to the shooting position NOT VISITED to make the agent go there again to shoot the wumpus
                                     bfs_path = self.goback_bfs(x, (i,j))
                                     for cell in bfs_path:
-                                        self.visited.remove(cell)
+                                        if cell in self.visited:
+                                            self.visited.remove(cell)
 
 
     def update_ramify(self): #update the intersections that can be backtracked
@@ -214,8 +204,8 @@ class Agent:
                 self.W[wumpus] = 0
                 self.safe.append(wumpus)
                 for cell in self.adj(wumpus):
-                    set(self.S,cell,0) 
-                    self.shooting_position.remove(cell)
+                    if cell in self.shooting_position:
+                        self.shooting_position.remove(cell)
 
 #GET THE LIST OF ACTIONS/PATH
     def get_actions_list(self):
@@ -273,6 +263,8 @@ class Agent:
                                 self.path.append(step)
                                 self.get_move_action()
                         break
+            #print(self.safe)
+            #print(self.path)
 def not_moving_action(act):
     return (act == Action.CLIMB) or (act == Action.SHOOT) or (act == Action.GRAB)
 
@@ -303,4 +295,3 @@ def set(m,coor,val):
 # agent.get_actions_list()
 # print(agent.actions)
 # print(agent.path)
-
