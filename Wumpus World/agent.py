@@ -55,17 +55,6 @@ class Agent:
     def update_position(self, next_position):
         self.pos = next_position
         
-    def get_direction(curr_pos, next_pos):
-        if next_pos[0] < curr_pos[0]:
-            return Action.UP
-        elif next_pos[0] > curr_pos[0]:
-            return Action.DOWN
-        elif next_pos[1] < curr_pos[1]:
-            return Action.LEFT
-        elif next_pos[1] > curr_pos[1]:
-            return Action.RIGHT
-        else:
-            return None
 
         
     def adj(self, x): #adjacent cells of x
