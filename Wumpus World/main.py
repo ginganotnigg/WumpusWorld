@@ -118,15 +118,53 @@ class Board:
     def drawScore(self):
         self.screen.blit(alert_font.render(f'Score: {self.score}', True, 'white'), (WIDTH * pt / 2 - 80, HEIGHT * pt + 10))
 
-    def drawAgent(self):
-        if self.agent.action == Action.UP:
-            self.screen.blit(self.AGENT_UP, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
-        elif self.agent.action == Action.LEFT:
-            self.screen.blit(self.AGENT_LEFT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
-        elif self.agent.action == Action.DOWN:
-            self.screen.blit(self.AGENT_DOWN, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
-        elif self.agent.action == Action.RIGHT:
-            self.screen.blit(self.AGENT_RIGHT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+    def drawAgent(self, path, cur_step):
+        if(cur_step > 0):    
+            # prev_step_pos = path[cur_step - 1]    
+            if path[cur_step][0] > path[cur_step -  1][0]:
+                # self.screen.blit(self.AGENT_DOWN, (prev_step_pos[1] * pt, prev_step_pos[0] * pt))
+                self.screen.blit(self.AGENT_DOWN, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][0] < path[cur_step -  1][0]:
+                # self.screen.blit(self.AGENT_UP, (prev_step_pos[1] * pt, prev_step_pos[0] * pt))
+                self.screen.blit(self.AGENT_UP, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][1] > path[cur_step -  1][1]:
+                # self.screen.blit(self.AGENT_RIGHT, (prev_step_pos[1] * pt, prev_step_pos[0] * pt))
+                self.screen.blit(self.AGENT_RIGHT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][1] < path[cur_step -  1][1]:
+                # self.screen.blit(self.AGENT_LEFT, (prev_step_pos[1] * pt, prev_step_pos[0] * pt))
+                self.screen.blit(self.AGENT_LEFT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            # new_direction = get_direction(self.agent.pos, path[cur_step])
+            # if new_direction != self.agent.direction:
+            #     self.agent.direction = new_direction
+            #     self.rotateAgentImage()
+            # self.screen.blit(self.agent.asset, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+
+        else:
+            if path[cur_step][0] > path[cur_step +  1][0]:
+                self.screen.blit(self.AGENT_UP, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][0] < path[cur_step +  1][0]:
+                self.screen.blit(self.AGENT_DOWN, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][1] > path[cur_step +  1][1]:
+                self.screen.blit(self.AGENT_LEFT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][1] < path[cur_step +  1][1]:
+                self.screen.blit(self.AGENT_RIGHT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            
+    def turnAgent(self, path, cur_step):
+        if(cur_step > 0) & (cur_step != len(path) - 1):
+            if path[cur_step][0] > path[cur_step +  1][0]:
+                print("Turn up")
+                self.screen.blit(self.AGENT_UP, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][0] < path[cur_step +  1][0]:
+                print("Turn down")
+                self.screen.blit(self.AGENT_DOWN, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][1] > path[cur_step +  1][1]:
+                print("Turn left")
+                self.screen.blit(self.AGENT_LEFT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            elif path[cur_step][1] < path[cur_step +  1][1]:
+                print("Turn right")
+                self.screen.blit(self.AGENT_RIGHT, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
+            pygame.time.delay(200)
+            
 
 
     ############################# ACTIONS #############################
@@ -298,8 +336,7 @@ def update_agent_position_from_path(agent, board, path, current_step):
     # if path:
     #     next_position = path.pop(0)
         next_position = path[current_step]
-        #agent.update_position(next_position)
-
+        agent.update_position(next_position)
         # Nếu Agent tới vị trí có Gold, thì xóa Gold
         if board.world.map[next_position[0]][next_position[1]].getGold():
             board.removeGold(next_position)
@@ -307,7 +344,6 @@ def update_agent_position_from_path(agent, board, path, current_step):
         if board.world.map[next_position[0]][next_position[1]].getWumpus():
             board.removeWumpus(next_position)
 
-current_step = 0
 
 # EXECUTE
 wumpus = WumpusWorld()
@@ -316,30 +352,38 @@ board = Board(wumpus)
 stack = []
 
 board.agent.get_actions_list()
+board.agent.get_move_action()
+agent_actions = board.agent.actions
+# PLUT = [action for action in agent_actions if action in {Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT}]
+
 agent_path = board.agent.path
+
 
 board.removePlayer(list(agent_path[0]))
 
-while run and current_step < len(agent_path):
-    board.screen.fill('black')
-    board.drawWorld()
+def main_run():
+    current_step = 0
+    run = True
+    while run and current_step < len(agent_path):
+        board.screen.fill('black')
+        board.drawWorld()
 
-    # Update agent position
-    # board.agent.update_position(agent_path[current_step])
-    update_agent_position_from_path(board.agent, board, agent_path, current_step)
+        # Update agent position
+        update_agent_position_from_path(board.agent, board, agent_path, current_step)
 
-    # Draw agent and other elements
-    board.drawAgent()
-    board.drawScore()
+        # Draw agent and other elements
+        board.drawAgent(agent_path, current_step)
+        board.drawScore()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if not stop and event.type == pygame.KEYUP:
-            board.updateBoard(event)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if not stop and event.type == pygame.KEYUP:
+                board.updateBoard(event)
 
-    pygame.display.flip()
-    pygame.time.delay(100)  # Adjust the delay time as needed
-    current_step += 1
-pygame.quit()
+        pygame.display.flip()
+        pygame.time.delay(400)  # Adjust the delay time as needed
+        # board.turnAgent(agent_path, current_step)
+        current_step += 1
+    pygame.quit()
 

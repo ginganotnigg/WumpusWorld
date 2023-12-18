@@ -46,12 +46,28 @@ class Agent:
         self.num_gold = 0
         self.ramify = []
         self.shooting_position = []
+        self.pos = (0, 0)
         # If guiding_path is not empty, this is the action which will be perform when the agent arrives at the end of guiding_path.
         #self.guiding_path = []
         # If the agent's previous action is shooting, this is the target of that shot.
         #self.prev_shoot_pos = ()
 
+    def update_position(self, next_position):
+        self.pos = next_position
+        
+    def get_direction(curr_pos, next_pos):
+        if next_pos[0] < curr_pos[0]:
+            return Action.UP
+        elif next_pos[0] > curr_pos[0]:
+            return Action.DOWN
+        elif next_pos[1] < curr_pos[1]:
+            return Action.LEFT
+        elif next_pos[1] > curr_pos[1]:
+            return Action.RIGHT
+        else:
+            return None
 
+        
     def adj(self, x): #adjacent cells of x
         arr = []
         i = x[0]
