@@ -118,7 +118,7 @@ class Board:
     def drawScore(self):
         self.screen.blit(alert_font.render(f'Score: {self.score}', True, 'white'), (WIDTH * pt / 2 - 80, HEIGHT * pt + 10))
 
-    def drawAgent(self, path, cur_step):
+    def drawAgent(self, path, cur_step, actions):
         agentImage = None
         if(cur_step > 0):    
             if path[cur_step][0] > path[cur_step -  1][0]:
@@ -129,8 +129,12 @@ class Board:
                 agentImage = self.AGENT_RIGHT
             elif path[cur_step][1] < path[cur_step -  1][1]:
                 agentImage = self.AGENT_LEFT
+            self.score -= 10
         else:
             agentImage = self.AGENT_RIGHT
+        if(cur_step == len(path) - 1):
+            if(actions[-1] == Action.CLIMB):
+                self.score += 10
         self.screen.blit(agentImage, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
         
             
@@ -160,6 +164,7 @@ class Board:
                 elif path[cur_step][1] < next_pos[1]:
                     self.screen.blit(self.ARROW_RIGHT, (next_pos[1] * pt, next_pos[0] * pt))
                 board.world.killWumpus(next_pos[0], next_pos[1])
+                self.score -= 100
                 
         elif cur_step == len(path) - 1:
             if actions[-1] == Action.SHOOT:
@@ -177,6 +182,7 @@ class Board:
                     self.screen.blit(self.ARROW_LEFT, (next_pos[1] * pt, next_pos[0] * pt))
                 elif last_turn ==Action.RIGHT:
                     self.screen.blit(self.ARROW_RIGHT, (next_pos[1] * pt, next_pos[0] * pt))
+                self.score -= 100
         
     ############################# ACTIONS #############################
     def validPos(self, pos):
@@ -384,15 +390,14 @@ def update_agent_position_from_path(agent, board, path, current_step, lastGold):
 
 # EXECUTE
 wumpus = WumpusWorld()
-wumpus.readMap('map/map3.txt')
+wumpus.readMap('map/map5.txt')
 board = Board(wumpus)
 stack = []
 
 board.agent.get_actions_list()
 board.agent.get_move_action()
 agent_actions = board.agent.actions
-# PLUT = [action for action in agent_actions if action in {Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT}]
-
+# print(agent_actions)
 agent_path = board.agent.path
 
 
@@ -408,7 +413,7 @@ def main_run():
         # Update agent position
         run = update_agent_position_from_path(board.agent, board, agent_path, current_step, lastGold)
         if run:
-            board.drawAgent(agent_path, current_step)
+            board.drawAgent(agent_path, current_step, agent_actions)
         else:
             if(lastGold[0]):
                board.drawAgent(agent_path, current_step) 
