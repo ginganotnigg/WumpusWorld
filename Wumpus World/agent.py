@@ -14,16 +14,6 @@ class Action(enum.Enum):
     GRAB = 6
     CLIMB = 7
 
-action = {
-    "UP": 1,
-    "DOWN": 3,
-    "LEFT": 2,
-    "RIGHT": 4,
-    "SHOOT": 5,
-    "GRAB": 6,
-    "CLIMB": 7
-}
-
 class Agent:
     def __init__(self, world_class):
         #
@@ -91,18 +81,6 @@ class Agent:
                         self.safe.append((i, j - 1))
                     if (i + 1, j) not in self.safe:
                         self.safe.append((i + 1, j))
-            #pit detection
-            for j in range(1, len(self.world)):
-                if at(self.B,(i,j)) == 1:
-                    not_pit = []
-                    for cell in self.adj((i,j)):
-                        if at(self.W,cell) == 1 or cell in self.visited or cell in self.safe:
-                            not_pit.append(cell)
-                    temp = len(self.adj((i,j))) - 1
-                    if len(not_pit) == temp: #make sure that all-except-one adjacent cell is safe, the remaining cell is the pit
-                        for cell in self.adj((i,j)): 
-                            if cell not in not_pit:
-                                set(self.P,cell,1)
 
             #wumpus detection
             for j in range(1, len(self.world)):
@@ -134,10 +112,11 @@ class Agent:
             if num_visit >= len(self.adj(i)):
                 self.ramify.remove(i)
     
-    def update_stack(self):
-        for i in self.stack:
-            if (at(self.W,i) == 1) or (at(self.P,i) == 1):
-                self.stack.remove(i)
+    # def update_stack(self):
+    #     pass
+    #         for i in self.stack:
+    #          if (at(self.W,i) == 1) or (at(self.P,i) == 1):
+    #              self.stack.remove(i)
 
     def goback_bfs(self, start, end):
         parent = {}
@@ -201,16 +180,24 @@ class Agent:
                 elif (wy < y): self.actions.append(Action.LEFT)
                 self.actions.append(Action.SHOOT)
                 #remove wumpus and its stench and remove shooting positions around
-                self.W[wumpus] = 0
+                set(self.W,wumpus,0)
                 self.safe.append(wumpus)
                 for cell in self.adj(wumpus):
-                    if cell in self.shooting_position:
-                        self.shooting_position.remove(cell)
+                    #remove one stench
+                    temp = at(self.world,cell)
+                    temp = temp.replace('S','',1)
+                    set(self.world,cell,temp)
+                    ##make unvisited
+                    # if cell in self.visited:
+                    #     self.visited.remove(cell)
+                    #remove shooting pos
+                    # if cell in self.shooting_position:
+                    #     self.shooting_position.remove(cell)
 
 #GET THE LIST OF ACTIONS/PATH
     def get_actions_list(self):
         while len(self.stack) != 0:
-            self.update_stack()
+            #self.update_stack()
             cur = self.stack[-1]
             self.stack = self.stack[:-1]
             if at(self.world,cur) == '-':
@@ -264,7 +251,9 @@ class Agent:
                                 self.get_move_action()
                         break
             #print(self.safe)
-            #print(self.path)
+            # print(self.path)
+            self.actions.append(Action.CLIMB)
+            
 def not_moving_action(act):
     return (act == Action.CLIMB) or (act == Action.SHOOT) or (act == Action.GRAB)
 

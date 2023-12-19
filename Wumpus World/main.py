@@ -390,14 +390,13 @@ def update_agent_position_from_path(agent, board, path, current_step, lastGold):
 
 # EXECUTE
 wumpus = WumpusWorld()
-wumpus.readMap('map/map5.txt')
+wumpus.readMap('map/map4.txt')
 board = Board(wumpus)
 stack = []
 
 board.agent.get_actions_list()
 board.agent.get_move_action()
 agent_actions = board.agent.actions
-# print(agent_actions)
 agent_path = board.agent.path
 
 
@@ -407,6 +406,7 @@ def main_run():
     current_step = 0
     run = True
     lastGold = [False]
+    
     while run and current_step < len(agent_path):
         board.screen.fill('black')
         board.drawWorld()
@@ -441,6 +441,7 @@ def main_run():
         pygame.display.flip()
         pygame.time.delay(150)
         current_step += 1
+
         
     if not board.world.leftWumpus() and not board.world.leftGold():
         board.endGame("Clear")
