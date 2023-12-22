@@ -185,11 +185,14 @@ class Agent:
                 for cell in self.adj(wumpus):
                     #remove one stench
                     temp = at(self.world,cell)
-                    temp = temp.replace('S','',1)
+                    print(temp)
+                    temp = temp.replace('S','-',1)
+                    print(temp)
                     set(self.world,cell,temp)
-                    ##make unvisited
-                    # if cell in self.visited:
-                    #     self.visited.remove(cell)
+                    ##make unvisited to make the wumpus explore them again
+                    if cell in self.visited:
+                         (self.visited).remove(cell)
+                    set(self.S,cell,0)
                     #remove shooting pos
                     # if cell in self.shooting_position:
                     #     self.shooting_position.remove(cell)
@@ -200,10 +203,11 @@ class Agent:
             #self.update_stack()
             cur = self.stack[-1]
             self.stack = self.stack[:-1]
-            if at(self.world,cur) == '-':
-                for i in self.adj(cur):
-                    if i not in self.safe:
-                        self.safe.append(i)
+            if '-' in at(self.world,cur) or 'G' in at(self.world,cur):
+                if ('B' not in at(self.world,cur)) and ('S' not in at(self.world,cur)):
+                    for i in self.adj(cur):
+                        if i not in self.safe:
+                            self.safe.append(i)
             if cur not in self.visited:
                 ##
                 self.path.append(cur)
@@ -250,9 +254,9 @@ class Agent:
                                 self.path.append(step)
                                 self.get_move_action()
                         break
-            #print(self.safe)
-            # print(self.path)
-            self.actions.append(Action.CLIMB)
+        #print(self.safe)
+        # print(self.path)
+        self.actions.append(Action.CLIMB)
             
 def not_moving_action(act):
     return (act == Action.CLIMB) or (act == Action.SHOOT) or (act == Action.GRAB)
