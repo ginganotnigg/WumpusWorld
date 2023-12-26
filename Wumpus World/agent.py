@@ -184,7 +184,7 @@ class Agent:
                 self.safe.append(wumpus)
                 #remove the wumpus
                 temp = at(self.world,wumpus)
-                if ('W' in temp) temp = temp.replace('W','-',1)
+                if ('W' in temp): temp = temp.replace('W','-',1)
                 set(self.world,wumpus,temp)
                 for cell in self.adj(wumpus):
                     #remove one stench
