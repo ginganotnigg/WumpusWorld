@@ -182,6 +182,10 @@ class Agent:
                 #remove wumpus and its stench and remove shooting positions around
                 set(self.W,wumpus,0)
                 self.safe.append(wumpus)
+                #remove the wumpus
+                temp = at(self.world,wumpus)
+                if ('W' in temp) temp = temp.replace('W','-',1)
+                set(self.world,wumpus,temp)
                 for cell in self.adj(wumpus):
                     #remove one stench
                     temp = at(self.world,cell)
