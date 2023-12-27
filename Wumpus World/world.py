@@ -57,7 +57,7 @@ class WumpusWorld:
                             adj = self.getAdjacents(i, j)
                             self.numWumpus += 1
                             for a in adj:
-                                (self.map[a[0]][a[1]]).setStrench()
+                                (self.map[a[0]][a[1]]).setStench()
                         if 'A' in tiles[i][j]:
                             (self.map[i][j]).setPlayer()
                             self.doorPos = (i, j)
@@ -84,8 +84,8 @@ class WumpusWorld:
         self.map[i][j].removeWumpus()
         adj = self.getAdjacents(i, j)
         for a in adj:
-            if self.map[a[0]][a[1]].getStrench():
-                self.map[a[0]][a[1]].removeStrench()
+            if self.map[a[0]][a[1]].getStench():
+                self.map[a[0]][a[1]].removeStench()
 
     def movePlayer(self, before_i, before_j, after_i, after_j):
         self.map[before_i][before_j].removePlayer()

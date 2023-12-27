@@ -4,12 +4,10 @@ import world
 
 
 class Action(enum.Enum):
-    #GO = 0
     UP = 1
     LEFT = 2
     DOWN = 3
     RIGHT = 4
-    #
     SHOOT = 5
     GRAB = 6
     CLIMB = 7
@@ -189,9 +187,7 @@ class Agent:
                 for cell in self.adj(wumpus):
                     #remove one stench
                     temp = at(self.world,cell)
-                    print(temp)
                     temp = temp.replace('S','-',1)
-                    print(temp)
                     set(self.world,cell,temp)
                     ##make unvisited to make the wumpus explore them again
                     if cell in self.visited:
@@ -258,8 +254,6 @@ class Agent:
                                 self.path.append(step)
                                 self.get_move_action()
                         break
-        #print(self.safe)
-        # print(self.path)
         self.actions.append(Action.CLIMB)
             
 def not_moving_action(act):
@@ -273,22 +267,3 @@ def set(m,coor,val):
     x = coor[0]
     y = coor[1]
     m[x][y] = val
-
-
-
-# class TestWorld:
-#     def __init__(self):
-#         self.doorPos = (9,0)
-#         self.map = []
-#         with open('map1.txt', 'r') as f:
-#             lines = f.read().splitlines()
-#             for line in lines:
-#                 (self.map).append(line.split('.'))
-#         print(self.map)
-
-# test = TestWorld()
-# agent = Agent(test.map,test.doorPos)
-
-# agent.get_actions_list()
-# print(agent.actions)
-# print(agent.path)
