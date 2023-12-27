@@ -4,10 +4,12 @@ import world
 
 
 class Action(enum.Enum):
+    #GO = 0
     UP = 1
     LEFT = 2
     DOWN = 3
     RIGHT = 4
+    #
     SHOOT = 5
     GRAB = 6
     CLIMB = 7
@@ -28,13 +30,18 @@ class Agent:
         self.safe.extend(self.adj(self.start))
         self.stack = [self.start]
         self.prev = {}
+        self.ramify = []
+        self.shooting_position = []
+        self.stench = []
         ##
         self.path = []
         self.actions = [Action.RIGHT]
         self.num_gold = 0
-        self.ramify = []
-        self.shooting_position = []
         self.pos = (0, 0)
+        # If guiding_path is not empty, this is the action which will be perform when the agent arrives at the end of guiding_path.
+        #self.guiding_path = []
+        # If the agent's previous action is shooting, this is the target of that shot.
+        #self.prev_shoot_pos = ()
 
     def update_position(self, next_position):
         self.pos = next_position
@@ -75,8 +82,19 @@ class Agent:
                         self.safe.append((i, j - 1))
                     if (i + 1, j) not in self.safe:
                         self.safe.append((i + 1, j))
-
-            #wumpus detection
+            #pit detection
+            for j in range(1, len(self.world)):
+                if at(self.B,(i,j)) == 1:
+                    not_pit = []
+                    for cell in self.adj((i,j)):
+                        if at(self.W,cell) == 1 or cell in self.visited or cell in self.safe:
+                            not_pit.append(cell)
+                    temp = len(self.adj((i,j))) - 1
+                    if len(not_pit) == temp: #make sure that all-except-one adjacent cell is safe, the remaining cell is the wumpus
+                        for cell in self.adj((i,j)): 
+                            if cell not in not_pit:
+                                set(self.P,cell,1)  
+            #wumpus detection - SURE
             for j in range(1, len(self.world)):
                 if at(self.S,(i,j)) == 1:
                     not_wumpus = []
@@ -94,8 +112,7 @@ class Agent:
                                     bfs_path = self.goback_bfs(x, (i,j))
                                     for cell in bfs_path:
                                         if cell in self.visited:
-                                            self.visited.remove(cell)
-
+                                            (self.visited).remove(cell)            
 
     def update_ramify(self): #update the intersections that can be backtracked
         for i in self.ramify:
@@ -162,6 +179,7 @@ class Agent:
                 self.actions.append(Action.RIGHT)
 
     def shoot(self,cur):
+        #print(self.stench)
         for wumpus in self.adj(cur):
             if at(self.W,wumpus) == 1:
                 x = cur[0]
@@ -175,23 +193,27 @@ class Agent:
                 self.actions.append(Action.SHOOT)
                 #remove wumpus and its stench and remove shooting positions around
                 set(self.W,wumpus,0)
-                self.safe.append(wumpus)
                 #remove the wumpus
                 temp = at(self.world,wumpus)
-                if ('W' in temp): temp = temp.replace('W','-',1)
-                set(self.world,wumpus,temp)
+                if ('W' in temp): 
+                    self.safe.append(wumpus)
+                    temp = temp.replace('W','-',1)
+                    set(self.world,wumpus,temp)
                 for cell in self.adj(wumpus):
                     #remove one stench
                     temp = at(self.world,cell)
                     temp = temp.replace('S','-',1)
                     set(self.world,cell,temp)
                     ##make unvisited to make the wumpus explore them again
-                    if cell in self.visited:
+                    if (cell in self.visited):
                          (self.visited).remove(cell)
                     set(self.S,cell,0)
+                    if (cell in self.stench):
+                        (self.stench).remove(cell)
                     #remove shooting pos
                     # if cell in self.shooting_position:
                     #     self.shooting_position.remove(cell)
+        #print(self.stench)
 
 #GET THE LIST OF ACTIONS/PATH
     def get_actions_list(self):
@@ -219,6 +241,8 @@ class Agent:
                         self.safe.append(cur)
                 if 'S' in at(self.world,cur):
                     set(self.S,cur,1)
+                    if cur not in self.stench:
+                        (self.stench).append(cur)
                     if cur not in self.safe:
                         self.safe.append(cur)
                     if cur in self.shooting_position:
@@ -227,7 +251,24 @@ class Agent:
                 self.update_ramify()
                 ##
                 num_direc = 0
-                for i in self.adj(cur):
+                i = 1
+                while (not_moving_action(self.actions[-i])): #take the latest actions that are NOT special actions (shoot, grab)
+                    i += 1
+                latest_dir = self.actions[-i]
+                prior = ()
+                if latest_dir == Action.DOWN:
+                    prior = (cur[0] + 1, cur[1])
+                elif latest_dir == Action.LEFT:
+                    prior = (cur[0], cur[1] - 1)
+                elif latest_dir == Action.RIGHT:
+                    prior = (cur[0], cur[1] + 1)
+                else:
+                    prior = (cur[0] - 1, cur[1])
+                adj_list = self.adj(cur)
+                if prior in adj_list:
+                    adj_list.remove(prior)
+                    adj_list.append(prior)
+                for i in adj_list:
                     if (i not in self.visited) & (i in self.safe):
                         self.stack.append(i)
                         self.prev[i] = cur
@@ -243,15 +284,36 @@ class Agent:
                             for step in bfs_path:
                                 self.path.append(step)
                                 self.get_move_action()
-                    else:
-                        bfs_path = self.goback_bfs(cur, self.start)
-                        if type(bfs_path)!= None: 
-                            for step in bfs_path:
-                                self.path.append(step)
-                                self.get_move_action()
-                        break
-        self.actions.append(Action.CLIMB)
             
+            if (len(self.stack) == 0) and (len(self.stench) != 0): #phase 2: when possible route is no more, trace back to the stenches to shoot (twice or more)
+                #
+                for cell in self.adj(self.stench[-1]):
+                    if ((cell not in self.safe) or (cell not in self.visited)) and (at(self.P,cell) == 0):
+                        set(self.W,cell,1)
+                #
+                bfs_path = self.goback_bfs(self.path[-1], self.stench[-1])
+                if type(bfs_path)!=None: 
+                    for step in bfs_path:
+                        self.path.append(step)
+                        self.get_move_action()
+                self.stack.append(self.stench[-1])
+                self.stench = self.stench[:-1]
+                #
+                self.shoot(self.path[-1])
+                
+            if (len(self.stack) == 0) and (len(self.stench) == 0):
+                bfs_path = self.goback_bfs(self.path[-1], self.start)
+                if type(bfs_path)!= None: 
+                    for step in bfs_path:
+                        self.path.append(step)
+                        self.get_move_action()
+                
+            
+        #print(self.safe)
+        print(self.path)
+        print(self.actions)
+        
+        self.actions.append(Action.CLIMB)  
 def not_moving_action(act):
     return (act == Action.CLIMB) or (act == Action.SHOOT) or (act == Action.GRAB)
 
@@ -263,3 +325,22 @@ def set(m,coor,val):
     x = coor[0]
     y = coor[1]
     m[x][y] = val
+
+
+
+# class TestWorld:
+#     def __init__(self):
+#         self.doorPos = (9,0)
+#         self.map = []
+#         with open('map1.txt', 'r') as f:
+#             lines = f.read().splitlines()
+#             for line in lines:
+#                 (self.map).append(line.split('.'))
+#         print(self.map)
+
+# test = TestWorld()
+# agent = Agent(test.map,test.doorPos)
+
+# agent.get_actions_list()
+# print(agent.actions)
+# print(agent.path)
