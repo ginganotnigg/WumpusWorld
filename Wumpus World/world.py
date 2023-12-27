@@ -1,5 +1,6 @@
 from tile import *
 import numpy as np
+import random as rd
 
 class WumpusWorld:
     def __init__(self):
@@ -25,11 +26,11 @@ class WumpusWorld:
         return adj
     
     def readMap(self, filename):
+        tiles = []
         try:
             with open(filename, 'r') as f:
                 lines = f.read().splitlines()
                 self.height = len(lines)
-                tiles = []
                 for line in lines:
                     tiles.append(line.split('.'))
                 self.width = len(tiles[0])
@@ -64,16 +65,69 @@ class WumpusWorld:
                 #
         except IOError:
             return None
-        with open(filename, 'r') as f:
-            temp = []
-            lines = f.read().splitlines()
-            for line in lines:
-                temp.append(line.split('.'))
-        temp = np.array(temp)
-        self.matrix = temp
+        self.matrix = np.array(tiles)
 
     def generateMap(self, numPit, numWumpus, numGold):
-        pass
+        self.width = self.height = 10
+        for i in range(10):
+            row = []
+            for j in range(10):
+                row.append(Tile())
+            self.map.append(row)
+
+        pos_x = rd.randint(0, 9)
+        pos_y = rd.randint(0, 9)
+        self.doorPos = (pos_x, pos_y)
+        self.map[pos_x][pos_y].setPlayer()
+        agentAdj = self.getAdjacents(self.doorPos[0], self.doorPos[1])
+
+        # Add pit            
+        for i in range(numPit):
+            randPos = (rd.randint(0, 9), rd.randint(0, 9))
+            while randPos == self.doorPos or randPos in agentAdj or self.map[randPos[0]][randPos[1]].getPit():
+                randPos = (rd.randint(0, 9), rd.randint(0, 9))
+            self.map[randPos[0]][randPos[1]].setPit()
+            adj = self.getAdjacents(randPos[0], randPos[1])
+            for a in adj:
+                (self.map[a[0]][a[1]]).setBreeze()
+
+        # Add gold
+        self.numGold = numGold
+        for i in range(self.numGold):
+            randPos = (rd.randint(0, 9), rd.randint(0, 9))
+            while randPos == self.doorPos or randPos in agentAdj or self.map[randPos[0]][randPos[1]].getPit() or self.map[randPos[0]][randPos[1]].getGold():
+                randPos = (rd.randint(0, 9), rd.randint(0, 9))
+            self.map[randPos[0]][randPos[1]].setGold()
+        
+        # Add wumpus
+        self.numWumpus = numWumpus
+        for i in range(self.numWumpus):
+            randPos = (rd.randint(0, 9), rd.randint(0, 9))
+            while randPos == self.doorPos or randPos in agentAdj or self.map[randPos[0]][randPos[1]].getPit() or self.map[randPos[0]][randPos[1]].getWumpus():
+                randPos = (rd.randint(0, 9), rd.randint(0, 9))
+            self.map[randPos[0]][randPos[1]].setWumpus()
+            adj = self.getAdjacents(randPos[0], randPos[1])
+            for a in adj:
+                (self.map[a[0]][a[1]]).setStench()
+
+        # Create matrix
+        tiles = []
+        for i in range(10):
+            row = []
+            for j in range(10):
+                tile = self.map[i][j]
+                text = ""
+                if tile.getGold(): text += 'G'
+                if tile.getWumpus(): text += 'W'
+                if tile.getPit(): text += 'P'
+                if tile.getBreeze(): text += 'B'
+                if tile.getStench(): text += 'S'
+                if tile.getPlayer(): text += 'A'
+                if text == "":
+                    text += '-'
+                row.append(text)
+            tiles.append(row)
+        self.matrix = np.array(tiles)
 
     def grabGold(self, i , j):
         self.numGold -= 1

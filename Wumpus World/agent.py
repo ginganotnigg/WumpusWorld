@@ -35,10 +35,6 @@ class Agent:
         self.ramify = []
         self.shooting_position = []
         self.pos = (0, 0)
-        # If guiding_path is not empty, this is the action which will be perform when the agent arrives at the end of guiding_path.
-        #self.guiding_path = []
-        # If the agent's previous action is shooting, this is the target of that shot.
-        #self.prev_shoot_pos = ()
 
     def update_position(self, next_position):
         self.pos = next_position

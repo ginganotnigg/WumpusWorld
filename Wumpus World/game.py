@@ -279,17 +279,18 @@ class Game:
     
 
 # EXECUTE
-def run_game_screen(state, selected_level):
+def run_game_screen(state):
     global stop, pause
     if stop: stop = False
     wumpus_map = WumpusWorld()
-    wumpus_map.readMap(f'map/map{selected_level}.txt')
+    if len(state["value"]) == 1:
+        wumpus_map.readMap(f'map/map{state["value"][0]}.txt')
+    else: wumpus_map.generateMap(state["value"][0], state["value"][1], state["value"][2])
     game = Game(wumpus_map)
 
     game.agent.get_actions_list()
     game.agent.get_move_action()
-    agent_actions = game.agent.actions
-    agent_path = game.agent.path
+    print(game.agent.path)
     current_step = 0
     run = True
     
