@@ -147,14 +147,20 @@ class Agent:
     def get_move_action(self):
         if len(self.path) < 2:
             return
-        old_x = self.path[-2] [0]
-        old_y = self.path[-2] [1]
-        new_x = self.path[-1] [0]
-        new_y = self.path[-1] [1]
+        #Take the latest actions that are NOT special actions (shoot, grab)
         i = 1
-        while (not_moving_action(self.actions[-i])): # Take the latest actions that are NOT special actions (shoot, grab)
+        while (not_moving_action(self.actions[-i])): 
             i += 1
         latest_dir = self.actions[-i]
+        ##Take the 2 latest coor that are NOT the same
+        i = 2
+        while (self.path[-i] == self.path[-1]):
+            i += 1
+        ##
+        new_x = self.path[-1] [0]
+        new_y = self.path[-1] [1]
+        old_x = self.path[-i] [0]
+        old_y = self.path[-i] [1]
         ##
         if new_x < old_x:
             self.actions.append(Action.UP)
@@ -189,6 +195,7 @@ class Agent:
                 _set(self.W,wumpus,0)
                 # Remove the wumpus
                 temp = at(self.world,wumpus)
+                #
                 if ('W' in temp): 
                     self.safe.append(wumpus)
                     #
