@@ -81,7 +81,7 @@ class Agent:
                 if at(self.B,(i,j)) == 1:
                     not_pit = []
                     for cell in self.adj((i,j)):
-                        if at(self.W,cell) == 1 or cell in self.visited or cell in self.safe:
+                        if cell in self.visited or cell in self.safe:
                             not_pit.append(cell)
                     temp = len(self.adj((i,j))) - 1
                     if len(not_pit) == temp: # Make sure that all-except-one adjacent cell is safe, the remaining cell is the wumpus
@@ -191,19 +191,21 @@ class Agent:
                 temp = at(self.world,wumpus)
                 if ('W' in temp): 
                     self.safe.append(wumpus)
+                    #
                     temp = temp.replace('W','-',1)
                     _set(self.world,wumpus,temp)
-                for cell in self.adj(wumpus):
-                    # Remove one stench
-                    temp = at(self.world,cell)
-                    temp = temp.replace('S','-',1)
-                    _set(self.world,cell,temp)
-                    # Make unvisited to make the agent explore them again
-                    if (cell in self.visited):
-                         self.visited.remove(cell)
-                    _set(self.S,cell,0)
-                    if (cell in self.stench):
-                        self.stench.remove(cell)
+                    #
+                    for cell in self.adj(wumpus):
+                        # Remove one stench
+                        temp = at(self.world,cell)
+                        temp = temp.replace('S','-',1)
+                        _set(self.world,cell,temp)
+                        # Make unvisited to make the agent explore them again
+                        if (cell in self.visited):
+                            self.visited.remove(cell)
+                        _set(self.S,cell,0)
+                        if (cell in self.stench):
+                            self.stench.remove(cell)
 
     #GET THE LIST OF ACTIONS/PATH
     def get_actions_list(self):
@@ -223,6 +225,11 @@ class Agent:
                 ##
                 if 'G' in at(self.world,cur):
                     self.num_gold += 1
+                    #
+                    temp = at(self.world,cur)
+                    temp = temp.replace('G','-',1)
+                    _set(self.world,cur,temp)
+                    #
                     self.actions.append(Action.GRAB)
                 if 'B' in at(self.world,cur):
                     _set(self.B,cur,1)
