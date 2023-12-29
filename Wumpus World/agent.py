@@ -27,7 +27,7 @@ class Agent:
         ##
         self.visited = []
         self.safe = [self.start]
-        self.safe.extend(self.adj(self.start))
+        ##self.safe.extend(self.adj(self.start))
         self.stack = [self.start]
         self.prev = {}
         self.ramify = []
@@ -221,7 +221,7 @@ class Agent:
             #self.update_stack()
             cur = self.stack[-1]
             self.stack = self.stack[:-1]
-            if '-' in at(self.world,cur) or 'G' in at(self.world,cur):
+            if '-' in at(self.world,cur) or 'G' in at(self.world,cur) or 'A' in at(self.world,cur):
                 if ('B' not in at(self.world,cur)) and ('S' not in at(self.world,cur)):
                     for i in self.adj(cur):
                         if i not in self.safe:
@@ -284,11 +284,12 @@ class Agent:
                             for step in bfs_path:
                                 self.path.append(step)
                                 self.get_move_action()
+                        cur = self.path[-1]
             
             if (len(self.stack) == 0) and (len(self.stench) != 0): #phase 2: when possible route is no more, trace back to the stenches to shoot (twice or more)
                 #
                 for cell in self.adj(self.stench[-1]):
-                    if ((cell not in self.safe) or (cell not in self.visited)) and (at(self.P,cell) == 0):
+                    if (   (cell not in self.safe) or (cell not in self.visited)  ) and (at(self.P,cell) == 0):
                         set(self.W,cell,1)
                 #
                 bfs_path = self.goback_bfs(self.path[-1], self.stench[-1])
@@ -296,6 +297,7 @@ class Agent:
                     for step in bfs_path:
                         self.path.append(step)
                         self.get_move_action()
+                cur = self.path[-1]
                 self.stack.append(self.stench[-1])
                 self.stench = self.stench[:-1]
                 #
@@ -307,11 +309,14 @@ class Agent:
                     for step in bfs_path:
                         self.path.append(step)
                         self.get_move_action()
+                cur = self.path[-1]
                 
             
         #print(self.safe)
         print(self.path)
         print(self.actions)
+        print(len(self.path))
+        print(len(self.actions))
         
         self.actions.append(Action.CLIMB)  
 def not_moving_action(act):
