@@ -60,24 +60,22 @@ def draw_menu():
     else:
         draw_select("Map", indexs, selected_idx, 250, 230)
 
+    screen.blit(pygame.image.load("assets/monster.png"), (412, 420))
+    screen.blit(pygame.transform.scale(pygame.image.load("assets/agent.png"), (100, 128)), (280, 500))
     buttons.append(Button("START", 240, 650, True, font, screen))
     buttons.append(Button("QUIT", 360, 650, True, font, screen))
 
-    screen.blit(pygame.image.load("assets/monster.png"), (412, 420))
-    screen.blit(pygame.transform.scale(pygame.image.load("assets/agent_up.png"), (100, 100)), (280, 520))
+    
     pygame.display.flip()
 
 def select_event(box, idx, length):
     if box["action"]=='up':
-        if idx == length - 1:
-            pass
-        else: 
-            idx += 1
+        idx += 1
+        idx %= length
     elif box["action"]=='down':
-        if idx == 0:
-            pass
-        else: 
-            idx -= 1
+        idx -= 1
+        if idx < 0: idx += length
+        idx %= length
     return idx
 
 def run_menu_screen():

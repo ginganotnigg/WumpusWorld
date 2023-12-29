@@ -117,14 +117,14 @@ class WumpusWorld:
             for j in range(10):
                 tile = self.map[i][j]
                 text = ""
-                if tile.getGold(): text += 'G'
-                if tile.getWumpus(): text += 'W'
-                if tile.getPit(): text += 'P'
-                if tile.getBreeze(): text += 'B'
-                if tile.getStench(): text += 'S'
-                if tile.getPlayer(): text += 'A'
+                if tile.getGold(): text = text + 'G'
+                if tile.getWumpus(): text = text + 'W'
+                if tile.getPit(): text = text + 'P'
+                if tile.getBreeze(): text = text + 'B'
+                if tile.getStench(): text = text + 'S'
+                if tile.getPlayer(): text = text + 'A'
                 if text == "":
-                    text += '-'
+                    text = '-'
                 row.append(text)
             tiles.append(row)
         self.matrix = np.array(tiles)

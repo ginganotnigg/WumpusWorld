@@ -56,10 +56,10 @@ class Game:
         self.AGENT_UP = pygame.transform.scale(pygame.image.load(f'assets/agent_up.png'), (pt, pt))
         self.AGENT_LEFT = pygame.transform.scale(pygame.image.load(f'assets/agent_left.png'), (pt, pt))
         self.AGENT_RIGHT = pygame.transform.scale(pygame.image.load(f'assets/agent_right.png'), (pt, pt))
-        self.ARROW_DOWN = pygame.transform.scale(pygame.image.load(f'assets/arrow_down.png'), (pt, pt))
-        self.ARROW_UP = pygame.transform.scale(pygame.image.load(f'assets/arrow_up.png'), (pt, pt))
-        self.ARROW_LEFT = pygame.transform.scale(pygame.image.load(f'assets/arrow_left.png'), (pt, pt))
-        self.ARROW_RIGHT = pygame.transform.scale(pygame.image.load(f'assets/arrow_right.png'), (pt, pt))
+        self.KNIFE_DOWN = pygame.transform.scale(pygame.image.load(f'assets/knife_down.png'), (36, pt))
+        self.KNIFE_UP = pygame.transform.scale(pygame.image.load(f'assets/knife_up.png'), (36, pt))
+        self.KNIFE_LEFT = pygame.transform.scale(pygame.image.load(f'assets/knife_left.png'), (pt, 36))
+        self.KNIFE_RIGHT = pygame.transform.scale(pygame.image.load(f'assets/knife_right.png'), (pt, 36))
 
         # Init blocking view
         for i in range(HEIGHT):
@@ -97,6 +97,13 @@ class Game:
                     wRow.append(None)
             self.warnings.append(wRow)
 
+        # Set blocking view
+        for i in range(HEIGHT):
+            for j in range(WIDTH):
+                currTile = self.world.map[i][j]
+                if not currTile.getPlayer() and self.fog[i][j]:
+                    self.screen.blit(self.FOG, (j * pt, i * pt))
+
         #Create objects
         for i in range(HEIGHT):
             oRow = []
@@ -111,68 +118,67 @@ class Game:
                 else:
                     oRow.append(None)
             self.objects.append(oRow)
-
-        # Set blocking view
-        for i in range(HEIGHT):
-            for j in range(WIDTH):
-                currTile = self.world.map[i][j]
-                if not currTile.getPlayer() and self.fog[i][j]:
-                    self.screen.blit(self.FOG, (j * pt, i * pt))
         
         
     def drawScore(self):
         self.screen.blit(self.alert_font.render(f'Score: {self.score}', True, 'white'), (520, 710))
         self.pauseBtn = Button("PAUSE", 40, 710, True, self.alert_font, self.screen, 'darkslategray' if pause else 'teal')
         self.resumeBtn = Button("RESUME", 150, 710, True, self.alert_font, self.screen, 'darkslategray' if not pause else 'teal')
+    
+    def getAgentImageByPath(self, cur_step):
+        path = self.agent.path
+        if path[cur_step][0] > path[cur_step + 1][0]:
+            return self.AGENT_UP
+        elif path[cur_step][0] < path[cur_step + 1][0]:
+            return self.AGENT_DOWN
+        elif path[cur_step][1] > path[cur_step + 1][1]:
+            return self.AGENT_LEFT
+        elif path[cur_step][1] < path[cur_step + 1][1]:
+            return self.AGENT_RIGHT
+        return None
 
     def drawAgent(self, cur_step):
         path = self.agent.path
         agentImage = None
-        if(cur_step > 0):    
-            if path[cur_step][0] > path[cur_step -  1][0]:
-                agentImage = self.AGENT_DOWN
-            elif path[cur_step][0] < path[cur_step -  1][0]:
-                agentImage = self.AGENT_UP
-            elif path[cur_step][1] > path[cur_step -  1][1]:
-                agentImage = self.AGENT_RIGHT
-            elif path[cur_step][1] < path[cur_step -  1][1]:
-                agentImage = self.AGENT_LEFT
-        else:
+        if cur_step > 0:    
+            agentImage = self.getAgentImageByPath(cur_step - 1)
+            if not agentImage and cur_step < len(path) - 1:
+                agentImage = self.getAgentImageByPath(cur_step)
+        elif cur_step == 0:
             agentImage = self.AGENT_RIGHT
         self.screen.blit(agentImage, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
         
             
     def turnAgent(self, cur_step):
+        global stop, pause
+        if not stop and not pause: pygame.display.flip()
+        pygame.time.delay(100)
         path = self.agent.path
         agentImage = None
-        if(cur_step > 0) & (cur_step != len(path) - 1):
-            if path[cur_step][0] > path[cur_step +  1][0]:
-                agentImage = self.AGENT_UP
-            elif path[cur_step][0] < path[cur_step +  1][0]:
-                agentImage = self.AGENT_DOWN
-            elif path[cur_step][1] > path[cur_step +  1][1]:
-                agentImage = self.AGENT_LEFT
-            elif path[cur_step][1] < path[cur_step +  1][1]:
-                agentImage = self.AGENT_RIGHT
+        if (cur_step > 0) & (cur_step < len(path) - 1):
+            agentImage = self.getAgentImageByPath(cur_step)
+            if not agentImage and cur_step < len(path) - 1:
+                agentImage = self.getAgentImageByPath(cur_step + 1)    
             self.screen.blit(agentImage, (self.agent.pos[1] * pt, self.agent.pos[0] * pt))
             
             
-    def drawArrow(self, cur_step):
+    def drawKnife(self, cur_step):
         path = self.agent.path
         actions = self.agent.actions
         if cur_step < len(path) - 1:
             next_pos = path[cur_step + 1]
+            pygame.time.delay(100)
             if self.world.map[next_pos[0]][next_pos[1]].getWumpus():
                 if path[cur_step][0] > next_pos[0]:
-                    self.screen.blit(self.ARROW_UP, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_UP, (next_pos[1] * pt + 17, next_pos[0] * pt + pt // 2))
                 elif path[cur_step][0] < next_pos[0]:
-                    self.screen.blit(self.ARROW_DOWN, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_DOWN, (next_pos[1] * pt + 17, next_pos[0] * pt - pt // 2))
                 elif path[cur_step][1] > next_pos[1]:
-                    self.screen.blit(self.ARROW_LEFT, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_LEFT, (next_pos[1] * pt + pt // 2, next_pos[0] * pt + 17))
                 elif path[cur_step][1] < next_pos[1]:
-                    self.screen.blit(self.ARROW_RIGHT, (next_pos[1] * pt, next_pos[0] * pt))
-                self.world.killWumpus(next_pos[0], next_pos[1])
+                    self.screen.blit(self.KNIFE_RIGHT, (next_pos[1] * pt - pt // 2, next_pos[0] * pt + 17))
                 self.score -= 100
+                self.world.killWumpus(next_pos[0], next_pos[1])
                 if self.fog[next_pos[0]][next_pos[1]]:
                     self.fog[next_pos[0]][next_pos[1]] = None
                 
@@ -185,13 +191,13 @@ class Game:
                         last_turn = actions[last_action]
                         break
                 if last_turn == Action.UP:
-                    self.screen.blit(self.ARROW_UP, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_UP, (next_pos[1] * pt, next_pos[0] * pt))
                 elif last_turn == Action.DOWN:
-                    self.screen.blit(self.ARROW_DOWN, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_DOWN, (next_pos[1] * pt, next_pos[0] * pt))
                 elif last_turn == Action.LEFT:
-                    self.screen.blit(self.ARROW_LEFT, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_LEFT, (next_pos[1] * pt, next_pos[0] * pt))
                 elif last_turn == Action.RIGHT:
-                    self.screen.blit(self.ARROW_RIGHT, (next_pos[1] * pt, next_pos[0] * pt))
+                    self.screen.blit(self.KNIFE_RIGHT, (next_pos[1] * pt, next_pos[0] * pt))
                 self.score -= 100
         
     ############################# ACTIONS #############################
@@ -210,6 +216,7 @@ class Game:
 
     def endGame(self, reason):
         global menuBtn
+        pygame.time.delay(200)
         self.blur_surface.fill((0, 0, 0, 150))
         self.screen.blit(self.blur_surface, (0, 0))
         alertText = self.alert_font.render('GAME ENDED', True, 'white')
@@ -257,20 +264,32 @@ class Game:
             
     def updateMap(self, current_step):
         global stop, pause
-        next_pos = self.agent.path[current_step]
+
+        # Moving
+        path = self.agent.path
+        next_pos = path[current_step]
         self.agent.update_position(next_pos)
         if self.fog[next_pos[0]][next_pos[1]]:
             self.fog[next_pos[0]][next_pos[1]] = None
         if not stop and not pause: self.score -= 10
+
+        # Gold and wumpus handling
         self.grabGold()
+        self.drawWorld()
+        self.drawScore()
+        self.drawAgent(current_step)
+        self.drawKnife(current_step)
+
+        # Check endgame
         if not self.world.leftWumpus() and not self.world.leftGold():
             stop = True
-        if current_step == len(self.agent.path) - 1 or self.agent.actions[-1] == Action.CLIMB:
+        if current_step == len(self.agent.path) - 1:
             if not stop and not pause: self.score += 10
             stop = True
+        self.turnAgent(current_step)
+
 
     def updateEnd(self):
-        pygame.time.delay(1000)
         if not self.world.leftWumpus() and not self.world.leftGold():
             self.endGame("Clear")
         else: self.endGame("Climb")
@@ -287,10 +306,9 @@ def run_game_screen(state):
         wumpus_map.readMap(f'map/map{state["value"][0]}.txt')
     else: wumpus_map.generateMap(state["value"][0], state["value"][1], state["value"][2])
     game = Game(wumpus_map)
-
     game.agent.get_actions_list()
-    game.agent.get_move_action()
-    print(game.agent.path)
+    print(game.agent.world)
+    print(game.world.matrix)
     current_step = 0
     run = True
     
@@ -312,20 +330,11 @@ def run_game_screen(state):
             
         # Update world
         game.updateMap(current_step)
-        game.drawWorld()
-        game.drawScore()
-        game.drawAgent(current_step)
         if not stop and not pause:
-            pygame.display.flip()
-            pygame.time.delay(100)
-            game.turnAgent(current_step)
-            game.drawArrow(current_step)
             current_step += 1
         elif stop:
             game.updateEnd()
-
+        
         pygame.display.flip()
         pygame.time.delay(200)
     pygame.quit()
-
-#run_game_screen(state=None, selected_level=2)
