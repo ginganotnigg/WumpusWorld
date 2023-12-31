@@ -116,13 +116,16 @@ class WumpusWorld:
             row = []
             for j in range(10):
                 tile = self.map[i][j]
+                stench = tile.getNumStench()
                 text = ""
                 if tile.getGold(): text = text + 'G'
                 if tile.getWumpus(): text = text + 'W'
                 if tile.getPit(): text = text + 'P'
                 if tile.getBreeze(): text = text + 'B'
-                if tile.getStench(): text = text + 'S'
                 if tile.getPlayer(): text = text + 'A'
+                while stench: 
+                    text = text + 'S'
+                    stench -= 1
                 if text == "":
                     text = '-'
                 row.append(text)

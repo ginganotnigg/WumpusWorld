@@ -17,6 +17,9 @@ class Tile:
 
     def getWumpus(self):
         return self.__isWumpus
+    
+    def getNumStench(self):
+        return self.__numStench
 
     def getStench(self):
         return False if self.__numStench == 0 else True

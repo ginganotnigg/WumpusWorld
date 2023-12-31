@@ -17,7 +17,7 @@ text_boxes = []
 buttons = []
 indexs = ["NO.1", "NO.2", "NO.3", "NO.4", "NO.5"]
 selected_idx = 0
-genNums = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+genNums = ["1", "2", "3", "4", "5", "6", "7", "8"]
 selected_pit = 0
 selected_wumpus = 0
 selected_gold = 0
@@ -99,13 +99,13 @@ def run_menu_screen():
                             selected_idx = select_event(box, selected_idx, 5)
                             break
                         if box["text"] == "Pit":
-                            selected_pit = select_event(box, selected_pit, 10)
+                            selected_pit = select_event(box, selected_pit, 8)
                             break
                         if box["text"] == "Wumpus":
-                            selected_wumpus = select_event(box, selected_wumpus, 10)
+                            selected_wumpus = select_event(box, selected_wumpus, 8)
                             break
                         if box["text"] == "Gold":
-                            selected_gold = select_event(box, selected_gold, 10)
+                            selected_gold = select_event(box, selected_gold, 8)
                             break
                 for button in buttons:
                     if button.is_clicked(event):

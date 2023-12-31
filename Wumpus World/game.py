@@ -15,12 +15,16 @@ HEIGHT = 10
 stop = False
 pause = False
 menuBtn = None
+action_index = None
+generate = False
 
 
 # GAME
 class Game:
     def __init__(self, world):
+        global action_index
         pygame.init()
+        action_index = 0
         self.screen = pygame.display.set_mode([WIDTH * pt, HEIGHT * pt + 50])
         self.map_font = pygame.font.Font('font/wormcuisine.ttf', 14)
         self.alert_font = pygame.font.Font('font/wormcuisine.ttf', 36)
@@ -163,12 +167,12 @@ class Game:
             
             
     def drawKnife(self, cur_step):
+        global action_index, generate
         path = self.agent.path
         actions = self.agent.actions
-        if cur_step < len(path) - 1:
+        if cur_step > 0 and cur_step < len(path) - 1:
             next_pos = path[cur_step + 1]
-            pygame.time.delay(100)
-            if self.world.map[next_pos[0]][next_pos[1]].getWumpus():
+            if generate and self.world.map[next_pos[0]][next_pos[1]].getWumpus():
                 if path[cur_step][0] > next_pos[0]:
                     self.screen.blit(self.KNIFE_UP, (next_pos[1] * pt + 17, next_pos[0] * pt + pt // 2))
                 elif path[cur_step][0] < next_pos[0]:
@@ -177,28 +181,55 @@ class Game:
                     self.screen.blit(self.KNIFE_LEFT, (next_pos[1] * pt + pt // 2, next_pos[0] * pt + 17))
                 elif path[cur_step][1] < next_pos[1]:
                     self.screen.blit(self.KNIFE_RIGHT, (next_pos[1] * pt - pt // 2, next_pos[0] * pt + 17))
-                self.score -= 100
                 self.world.killWumpus(next_pos[0], next_pos[1])
+                self.score -= 100
                 if self.fog[next_pos[0]][next_pos[1]]:
                     self.fog[next_pos[0]][next_pos[1]] = None
-                
-        elif cur_step == len(path) - 1:
-            if actions[-1] == Action.SHOOT:
-                last_turn = None
-                last_action = len(actions) - 1
-                while last_action >= 0:
-                    if(actions[last_action] in [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT]):
-                        last_turn = actions[last_action]
-                        break
-                if last_turn == Action.UP:
-                    self.screen.blit(self.KNIFE_UP, (next_pos[1] * pt, next_pos[0] * pt))
-                elif last_turn == Action.DOWN:
-                    self.screen.blit(self.KNIFE_DOWN, (next_pos[1] * pt, next_pos[0] * pt))
-                elif last_turn == Action.LEFT:
-                    self.screen.blit(self.KNIFE_LEFT, (next_pos[1] * pt, next_pos[0] * pt))
-                elif last_turn == Action.RIGHT:
-                    self.screen.blit(self.KNIFE_RIGHT, (next_pos[1] * pt, next_pos[0] * pt))
-                self.score -= 100
+            elif not generate:
+                old_x = path[cur_step - 1] [0]
+                old_y = path[cur_step - 1] [1]
+                new_x = path[cur_step] [0]
+                new_y = path[cur_step] [1]
+                actions = [action for action in actions if action != Action.GRAB]
+                latest_dir = actions[action_index]
+                if new_x < old_x:
+                    action_index += 1
+                    if latest_dir != Action.UP:
+                        action_index += 1
+                elif new_x > old_x:
+                    action_index += 1
+                    if latest_dir != Action.DOWN: 
+                        action_index += 1
+                elif new_y < old_y:
+                    action_index += 1
+                    if latest_dir != Action.LEFT:
+                        action_index += 1
+                elif new_y > old_y:
+                    action_index += 1
+                    if latest_dir != Action.RIGHT: 
+                        action_index += 1
+                if actions[action_index + 1] == Action.SHOOT or (actions[action_index + 1] != actions[action_index - 1] and actions[action_index + 2] == Action.SHOOT):
+                    if actions[action_index + 2] == Action.SHOOT: action_index += 1
+                    if actions[action_index] == Action.UP:
+                        next_pos = (path[cur_step][0] - 1, path[cur_step][1])
+                        self.screen.blit(self.KNIFE_UP, (next_pos[1] * pt + 17, next_pos[0] * pt + pt // 2))
+                    elif actions[action_index] == Action.DOWN:
+                        next_pos = (path[cur_step][0] + 1, path[cur_step][1])
+                        self.screen.blit(self.KNIFE_DOWN, (next_pos[1] * pt + 17, next_pos[0] * pt - pt // 2))
+                    elif actions[action_index] == Action.LEFT:
+                        next_pos = (path[cur_step][0], path[cur_step][1] - 1)
+                        self.screen.blit(self.KNIFE_LEFT, (next_pos[1] * pt + pt // 2, next_pos[0] * pt + 17))
+                    elif actions[action_index] == Action.RIGHT:
+                        next_pos = (path[cur_step][0], path[cur_step][1] + 1)
+                        self.screen.blit(self.KNIFE_RIGHT, (next_pos[1] * pt - pt // 2, next_pos[0] * pt + 17))
+                    else:
+                        pass
+                    self.score -= 100
+                    action_index += 1
+                    if self.world.map[next_pos[0]][next_pos[1]].getWumpus():
+                        self.world.killWumpus(next_pos[0], next_pos[1])
+                    if self.fog[next_pos[0]][next_pos[1]]:
+                        self.fog[next_pos[0]][next_pos[1]] = None
         
     ############################# ACTIONS #############################
     def validPos(self, pos):
@@ -278,7 +309,7 @@ class Game:
         self.drawWorld()
         self.drawScore()
         self.drawAgent(current_step)
-        self.drawKnife(current_step)
+        if not stop and not pause: self.drawKnife(current_step)
 
         # Check endgame
         if not self.world.leftWumpus() and not self.world.leftGold():
@@ -299,16 +330,21 @@ class Game:
 
 # EXECUTE
 def run_game_screen(state):
-    global stop, pause
+    global stop, pause, generate
     if stop: stop = False
     wumpus_map = WumpusWorld()
     if len(state["value"]) == 1:
+        generate = False
         wumpus_map.readMap(f'map/map{state["value"][0]}.txt')
-    else: wumpus_map.generateMap(state["value"][0], state["value"][1], state["value"][2])
+    else:
+        generate = True 
+        wumpus_map.generateMap(state["value"][0], state["value"][1], state["value"][2])
     game = Game(wumpus_map)
     game.agent.get_actions_list()
-    print(game.agent.world)
     print(game.world.matrix)
+    print(game.agent.path)
+    print(game.agent.actions)
+    print(len(game.agent.actions))
     current_step = 0
     run = True
     

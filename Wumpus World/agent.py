@@ -147,20 +147,17 @@ class Agent:
     def get_move_action(self):
         if len(self.path) < 2:
             return
-        #Take the latest actions that are NOT special actions (shoot, grab)
-        i = 1
-        while (not_moving_action(self.actions[-i])): 
-            i += 1
-        latest_dir = self.actions[-i]
-        ##Take the 2 latest coor that are NOT the same
-        i = 2
-        while (self.path[-i] == self.path[-1]):
-            i += 1
-        ##
+        if self.path[-2] == self.path[-1]:
+            self.path.pop()
+            return
+        old_x = self.path[-2] [0]
+        old_y = self.path[-2] [1]
         new_x = self.path[-1] [0]
         new_y = self.path[-1] [1]
-        old_x = self.path[-i] [0]
-        old_y = self.path[-i] [1]
+        i = 1
+        while (self.actions[-i].value > 4): # Take the latest actions that are NOT special actions (shoot, grab)
+            i += 1
+        latest_dir = self.actions[-i]
         ##
         if new_x < old_x:
             self.actions.append(Action.UP)
@@ -180,28 +177,38 @@ class Agent:
                 self.actions.append(Action.RIGHT)
 
     def shoot(self,cur):
+        next_step = True
         for wumpus in self.adj(cur):
             if at(self.W,wumpus) == 1:
                 x = cur[0]
                 y = cur[1]
                 wx = wumpus[0]
                 wy = wumpus[1]
-                if (wx > x): self.actions.append(Action.DOWN)
-                elif (wx < x): self.actions.append(Action.UP)
-                elif (wy > y): self.actions.append(Action.RIGHT)
-                elif (wy < y): self.actions.append(Action.LEFT)
+                i = 1
+                while (self.actions[-i].value > 4): 
+                    i += 1
+                latest_dir = self.actions[-i]
+                #
+                if (wx > x) and (latest_dir != Action.DOWN): 
+                    self.actions.append(Action.DOWN)
+                elif (wx < x) and (latest_dir != Action.UP): 
+                    self.actions.append(Action.UP)
+                elif (wy > y) and (latest_dir != Action.RIGHT): 
+                    self.actions.append(Action.RIGHT)
+                elif (wy < y) and (latest_dir != Action.LEFT): 
+                    self.actions.append(Action.LEFT)
                 self.actions.append(Action.SHOOT)
                 # Remove wumpus and its stench and remove shooting positions around
                 _set(self.W,wumpus,0)
                 # Remove the wumpus
                 temp = at(self.world,wumpus)
-                #
-                if ('W' in temp): 
+                
+                
+                if ('W' in temp):
+                    next_step = False 
                     self.safe.append(wumpus)
-                    #
                     temp = temp.replace('W','-',1)
                     _set(self.world,wumpus,temp)
-                    #
                     for cell in self.adj(wumpus):
                         # Remove one stench
                         temp = at(self.world,cell)
@@ -213,6 +220,7 @@ class Agent:
                         _set(self.S,cell,0)
                         if (cell in self.stench):
                             self.stench.remove(cell)
+                if next_step: self.path.append(cur)
 
     #GET THE LIST OF ACTIONS/PATH
     def get_actions_list(self):
@@ -232,11 +240,9 @@ class Agent:
                 ##
                 if 'G' in at(self.world,cur):
                     self.num_gold += 1
-                    #
                     temp = at(self.world,cur)
                     temp = temp.replace('G','-',1)
                     _set(self.world,cur,temp)
-                    #
                     self.actions.append(Action.GRAB)
                 if 'B' in at(self.world,cur):
                     _set(self.B,cur,1)
@@ -256,7 +262,7 @@ class Agent:
                 num_direc = 0
                 i = 1
                 # Take the latest actions that are NOT special actions (shoot, grab)
-                while (not_moving_action(self.actions[-i])): 
+                while (self.actions[-i].value > 4): 
                     i += 1
                 latest_dir = self.actions[-i]
                 prior = ()
